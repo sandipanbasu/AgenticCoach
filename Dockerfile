@@ -377,7 +377,10 @@ PY
 )"
 
 export BACKEND_PORT=${BACKEND_PORT:-8001}
-export FRONTEND_PORT=${FRONTEND_PORT:-3782}
+# Runtime JSON normally owns the application ports. Render exposes its public
+# service port through PORT, so allow an explicit deployment override to win
+# after the JSON export without changing local Docker defaults.
+export FRONTEND_PORT=${RENDER_FRONTEND_PORT:-${PORT:-${FRONTEND_PORT:-3782}}}
 
 # DEEPTUTOR_API_BASE_URL and DEEPTUTOR_AUTH_ENABLED are exported by the
 # export_runtime_settings_to_env eval above (see render_environment in

@@ -33,7 +33,7 @@ will be large.
 The manifest sets the process wiring:
 
 ```text
-FRONTEND_PORT=10000
+RENDER_FRONTEND_PORT=10000
 BACKEND_PORT=8001
 DEEPTUTOR_API_BASE_URL=http://127.0.0.1:8001
 DEEPTUTOR_AUTH_ENABLED=false

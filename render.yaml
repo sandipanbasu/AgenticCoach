@@ -10,7 +10,7 @@ services:
     envVars:
       # Render routes the public service port to 10000 by default. The image
       # runs the frontend on this port and keeps FastAPI internal on 8001.
-      - key: FRONTEND_PORT
+      - key: RENDER_FRONTEND_PORT
         value: "10000"
       - key: BACKEND_PORT
         value: "8001"
