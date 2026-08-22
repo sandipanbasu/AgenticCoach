@@ -115,7 +115,7 @@ export default function SettingsHub() {
               setPendingPrompt(
                 tr({
                   zh: "帮我配置一下 DeepTutor，先看看现在缺什么。",
-                  en: "Help me configure DeepTutor — start by checking what's missing.",
+                  en: "Help me configure AriseHub Agent Playground — start by checking what's missing.",
                 }),
               );
               router.push("/home");
@@ -123,7 +123,7 @@ export default function SettingsHub() {
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--border)]/60 px-3 py-1.5 text-[12.5px] font-medium text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:text-[var(--foreground)]"
           >
             <Sparkles size={13} />
-            {tr({ zh: "让 DeepTutor 帮我配", en: "Set up with DeepTutor" })}
+            {tr({ zh: "让 AriseHub Agent Playground 帮我配", en: "Set up with AriseHub Agent Playground" })}
           </button>
           <button
             type="button"

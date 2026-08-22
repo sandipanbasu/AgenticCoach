@@ -14,6 +14,7 @@ import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDevice } from "@/hooks/useDevice";
 import type { ReactNode } from "react";
+import { BRAND_NAME } from "@/lib/brand";
 
 /* Lets the sidebar dismiss the drawer after a nav click without every layout
    threading a callback down through WorkspaceSidebar/UtilitySidebar. Null on
@@ -113,18 +114,14 @@ export default function AppShell({ sidebar, children }: AppShellProps) {
             <Link href="/" className="flex items-center gap-1.5">
               <Image
                 src="/logo.png"
-                alt="DeepTutor"
+                alt={BRAND_NAME}
                 width={20}
                 height={20}
                 className="h-5 w-5"
               />
-              <Image
-                src="/banner.png"
-                alt="DeepTutor"
-                width={897}
-                height={236}
-                className="h-[18px] w-auto"
-              />
+              <span className="max-w-[180px] text-[11px] font-semibold leading-tight tracking-tight">
+                {BRAND_NAME}
+              </span>
             </Link>
           </div>
 
