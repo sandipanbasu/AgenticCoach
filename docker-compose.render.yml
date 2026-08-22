@@ -1,0 +1,19 @@
+services:
+  deeptutor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: arisehub-agent-playground-render
+    restart: unless-stopped
+    ports:
+      - "${RENDER_HOST_PORT:-3782}:10000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # Match Render's public port and keep FastAPI internal to the container.
+      RENDER_FRONTEND_PORT: "10000"
+      PORT: "10000"
+      BACKEND_PORT: "8001"
+      DEEPTUTOR_API_BASE_URL: http://127.0.0.1:8001
+      DEEPTUTOR_AUTH_ENABLED: "${DEEPTUTOR_AUTH_ENABLED:-false}"

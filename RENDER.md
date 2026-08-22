@@ -47,18 +47,17 @@ variables, not in the repository.
 
 ## Local validation
 
-Build and run the same image locally:
+Build and run the same image locally with the Render-focused Compose file:
 
 ```bash
-docker build -t arisehub-agent-playground .
-docker run --rm --name arisehub-agent-playground \
-  -p 3782:10000 \
-  -v arisehub-agent-playground-data:/app/data \
-  -e FRONTEND_PORT=10000 \
-  -e BACKEND_PORT=8001 \
-  -e DEEPTUTOR_API_BASE_URL=http://127.0.0.1:8001 \
-  arisehub-agent-playground
+docker compose -f docker-compose.render.yml up --build
 ```
 
 Open <http://127.0.0.1:3782> and verify login, chat streaming, uploads, and a
 restart with the same volume.
+
+Stop the local Render-shaped service with:
+
+```bash
+docker compose -f docker-compose.render.yml down
+```
