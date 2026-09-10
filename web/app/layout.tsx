@@ -5,7 +5,6 @@ import ThemeScript from "@/components/ThemeScript";
 import ToastViewport from "@/components/common/ToastViewport";
 import { AppShellProvider } from "@/context/AppShellContext";
 import { I18nClientBridge } from "@/i18n/I18nClientBridge";
-import { BRAND_NAME } from "@/lib/brand";
 
 // Geist matches the public site (deeptutor.info) and stays crisp at the
 // small UI sizes the composer/toolbars use, unlike the rounder Jakarta.
@@ -20,6 +19,8 @@ const fontSerif = Lora({
   display: "swap",
   variable: "--font-serif",
 });
+
+const BRAND_NAME = "AriseHub Agent Playground";
 
 export const metadata: Metadata = {
   title: BRAND_NAME,

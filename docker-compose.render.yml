@@ -1,5 +1,5 @@
 services:
-  deeptutor:
+  arisehub-agent-playground:
     build:
       context: .
       dockerfile: Dockerfile

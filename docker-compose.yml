@@ -1,7 +1,7 @@
 # ============================================
-# DeepTutor Docker Compose Configuration
+# AriseHub Agent Playground Docker Compose Configuration
 # ============================================
-# This file provides orchestration for DeepTutor services
+# This file provides orchestration for AriseHub Agent Playground services
 #
 # Usage:
 #   Production:  python scripts/docker_compose.py up -d
@@ -26,7 +26,7 @@ services:
   # ============================================
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
-    container_name: pocketbase
+    container_name: arisehub-pocketbase
     restart: unless-stopped
     ports:
       - "${DEEPTUTOR_DOCKER_POCKETBASE_PORT:-8090}:8090"
@@ -40,7 +40,7 @@ services:
       - ./data/pocketbase/public:/pb_public
       - ./data/pocketbase/hooks:/pb_hooks
     networks:
-      - deeptutor-network
+      - arisehub-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/api/health"]
       interval: 10s
@@ -49,21 +49,21 @@ services:
       start_period: 10s
 
   # ============================================
-  # All-in-One DeepTutor Service
+  # All-in-One AriseHub Agent Playground Service
   # ============================================
-  deeptutor:
+  arisehub-agent-playground:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: deeptutor
+    container_name: arisehub-agent-playground
     restart: unless-stopped
     ports:
       - "${DEEPTUTOR_DOCKER_BACKEND_PORT:-8001}:${DEEPTUTOR_DOCKER_BACKEND_PORT:-8001}"
       - "${DEEPTUTOR_DOCKER_FRONTEND_PORT:-3782}:${DEEPTUTOR_DOCKER_FRONTEND_PORT:-3782}"
 
     volumes:
-      # Everything DeepTutor persists lives under ./data — one tree to mount
+      # Everything AriseHub Agent Playground persists lives under ./data — one tree to mount
       # and back up: admin workspace + runtime settings (data/user), per-user
       # workspaces (data/users), partners (data/partners), accounts/grants/
       # audit (data/system), knowledge bases, memory.
@@ -96,24 +96,24 @@ services:
         condition: service_healthy
 
     networks:
-      - deeptutor-network
+      - arisehub-network
 
   # ============================================
   # Sandbox Runner Sidecar
   # ============================================
   # Executes untrusted shell commands in an isolated, least-privileged
   # container so the main app never has to. Rationale for the sidecar shape:
-  #   * the main `deeptutor` container keeps minimal privileges and does NOT
+  #   * the main `arisehub-agent-playground` container keeps minimal privileges and does NOT
   #     mount the docker socket or run untrusted code in its own process;
   #   * a sandbox escape here lands in a stripped, unprivileged container with
   #     no app secrets, not in the main app.
   # Not exposed to the host: it is reachable only on the internal
-  # deeptutor-network at http://sandbox-runner:8900.
+  # arisehub-network at http://sandbox-runner:8900.
   sandbox-runner:
     build:
       context: .
       dockerfile: Dockerfile.runner
-    container_name: deeptutor-sandbox-runner
+    container_name: arisehub-sandbox-runner
     restart: unless-stopped
 
     # Share the task workspaces at the SAME paths as the main app so the mount
@@ -172,11 +172,11 @@ services:
       start_period: 5s
 
     networks:
-      - deeptutor-network
+      - arisehub-network
 
 # ============================================
 # Networks
 # ============================================
 networks:
-  deeptutor-network:
+  arisehub-network:
     driver: bridge

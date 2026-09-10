@@ -3,9 +3,9 @@ name: Docker Release
 # Triggered when a GitHub Release is published.
 # Builds a multi-platform Docker image and pushes it to GitHub Container Registry (GHCR).
 #
-# Image: ghcr.io/hkuds/deeptutor
+# Image: ghcr.io/arise-hub/arisehub-agent-playground
 # Tags:
-#   - Version tag stripped of 'v' prefix (e.g. release v1.2.3 → image tag 1.2.3)
+#   - Version tag stripped of 'v' prefix (e.g. release v0.0.1 → image tag 0.0.1)
 #   - latest (always points to the most recently published release)
 #
 # Platforms: linux/amd64, linux/arm64
@@ -43,13 +43,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract tags from the release:
-      #   type=semver strips the leading 'v' (v1.2.3 → 1.2.3)
+      #   type=semver strips the leading 'v' (v0.0.1 → 0.0.1)
       #   type=raw adds a 'latest' tag on every published release
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/hkuds/deeptutor
+          images: ghcr.io/arise-hub/arisehub-agent-playground
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest

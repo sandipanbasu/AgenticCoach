@@ -1,5 +1,5 @@
 # ============================================
-# DeepTutor — Podman Compose (rootless, read-only rootfs)
+# AriseHub Agent Playground — Podman Compose (rootless, read-only rootfs)
 # ============================================
 # Requires:
 #   * podman 4.1+ (rootless)
@@ -9,22 +9,22 @@
 #     also works if it's installed and pointed at the podman socket.
 #     This file is `podman-compose` 1.5+ compatible.
 #   * Verify with:  `podman compose version` and  `podman info | grep -i rootless`
-#
+# #
 # Bring up (this file lives next to docker-compose.yml, so always pass -f):
 #   cp .env.example .env       # then edit
 #   podman compose -f compose.yaml up -d
 #   podman compose -f compose.yaml ps
-#   podman compose -f compose.yaml logs -f deeptutor
-#
+#   podman compose -f compose.yaml logs -f arisehub-agent-playground
+# #
 #   Tip: alias it for the session —  alias dc='podman compose -f compose.yaml'
 #   or export COMPOSE_FILE=compose.yaml so the default `podman compose`
 #   picks this file up without -f.
-#
+# #
 # Tear down (keeps volumes):
 #   podman compose -f compose.yaml down
 # Wipe data (DESTRUCTIVE):
 #   podman compose -f compose.yaml down -v
-#
+# #
 # Top-level choices (see git log / PR for full rationale):
 #   * All services run with `read_only: true`. The `tmpfs:` mounts below are
 #     the only writable surface inside each container's rootfs.
@@ -33,16 +33,16 @@
 #     Files you create on the host are visible as your own user inside.
 #   * Host-side port bindings are LOOPBACK ONLY (127.0.0.1:). Drop the
 #     `127.0.0.1:` prefix to expose on all interfaces.
-#   * Two services: `deeptutor` (backend+frontend in one GHCR image, run
+#   * Two services: `arisehub-agent-playground` (backend+frontend in one GHCR image, run
 #     under supervisord) and `pocketbase` (optional auth/storage sidecar).
 #     The sandbox-runner sidecar from docker-compose.yml is intentionally
 #     NOT included: the main app falls back to bwrap (Linux, if installed
 #     in the image) or the restricted subprocess backend controlled by
 #     the `sandbox_allow_subprocess` setting in system.json. See
 #     deeptutor/services/sandbox/config.py:build_backend().
-#   * The backend and frontend run as a non-root `deeptutor` user (UID
+#   * The backend and frontend run as a non-root `arisehub` user (UID
 #     1000). supervisord runs as root (PID 1), the entrypoint chowns
-#     `/app/data`, and each program is dropped to `deeptutor` via its
+#     `/app/data`, and each program is dropped to `arisehub` via its
 #     per-program `user=` directive, so the app processes are UID 1000
 #     inside the container. Under `userns_mode: keep-id` that maps to the
 #     host user.
@@ -55,14 +55,14 @@
 #     placeholder, no runtime `sed -i` on the bundle, and no compose env
 #     var for the API base.
 #   * Runtime settings (ports, auth, model catalog, integrations) live in
-#     data/user/settings/*.json INSIDE the deeptutor-data volume. The
+#     data/user/settings/*.json INSIDE the arisehub-data volume. The
 #     entrypoint unsets BACKEND_PORT, FRONTEND_PORT, NEXT_PUBLIC_API_BASE,
 #     NEXT_PUBLIC_API_BASE_EXTERNAL, AUTH_ENABLED, POCKETBASE_URL, etc.
 #     and re-exports them from the JSONs on every start. So: edit JSONs
-#     + `podman compose restart deeptutor`, NOT compose env vars.
+#     + `podman compose restart arisehub-agent-playground`, NOT compose env vars.
 # ============================================
 
-name: deeptutor
+name: arisehub-agent-playground
 
 services:
   # ----------------------------------------------------------
@@ -73,7 +73,7 @@ services:
   # Leave blank to run with the SQLite fallback (single-user / invite-only).
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
-    container_name: deeptutor-pocketbase
+    container_name: arisehub-pocketbase
     pull_policy: always
     restart: unless-stopped
     userns_mode: keep-id
@@ -95,7 +95,7 @@ services:
       - ./data/pocketbase/public:/pb_public:U
       - ./data/pocketbase/hooks:/pb_hooks:U
     networks:
-      - deeptutor
+      - arisehub
     healthcheck:
       test:
         - CMD
@@ -110,16 +110,16 @@ services:
       start_period: 10s
 
   # ----------------------------------------------------------
-  # DeepTutor — backend (FastAPI :8001) + frontend (Next.js :3782)
+  # AriseHub Agent Playground — backend (FastAPI :8001) + frontend (Next.js :3782)
   # ----------------------------------------------------------
   # Both run inside the same image, supervised by supervisord under the
-  # unprivileged `deeptutor` user (UID 1000). The image's entrypoint loads
+  # unprivileged `arisehub` user (UID 1000). The image's entrypoint loads
   # runtime settings from data/user/settings/*.json and exports them into
   # the supervisord children's environment, so changing ports/auth/providers
   # means editing JSONs + `podman compose restart`.
-  deeptutor:
-    image: ghcr.io/hkuds/deeptutor:latest
-    container_name: deeptutor
+  arisehub-agent-playground:
+    image: ghcr.io/arise-hub/arisehub-agent-playground:v0.0.1
+    container_name: arisehub-agent-playground
     pull_policy: always
     restart: unless-stopped
     userns_mode: keep-id
@@ -179,7 +179,7 @@ services:
       pocketbase:
         condition: service_healthy
     networks:
-      - deeptutor
+      - arisehub
     # Optional hardening — uncomment to taste. supervisord runs as root
     # (PID 1) and setuids each program down to UID 1000, which needs
     # CAP_SETUID/CAP_SETGID — so do NOT `cap_drop: ALL` here, it would stop
@@ -188,7 +188,7 @@ services:
     # security_opt:
     #   - no-new-privileges:true
     # # cap_drop: ALL is unsafe — supervisord needs CAP_SETUID/CAP_SETGID to
-    # # drop its children to the deeptutor user.
+    # # drop its children to the arisehub user.
     # Resource limits. Honored on cgroup v2 hosts; podman warns and skips
     # on cgroup v1 or no-cgroup environments.
     # pids_limit: 1024
@@ -196,7 +196,7 @@ services:
     # cpus: 4.0
 
 networks:
-  deeptutor:
+  arisehub:
     driver: bridge
 
 # Named volumes intentionally not used: with userns_mode: keep-id the

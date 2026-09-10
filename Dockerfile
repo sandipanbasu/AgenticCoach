@@ -1,13 +1,13 @@
 # ============================================
-# DeepTutor Multi-Stage Dockerfile
+# AriseHub Agent Playground Multi-Stage Dockerfile
 # ============================================
-# This Dockerfile builds a production-ready image for DeepTutor
+# This Dockerfile builds a production-ready image for AriseHub Agent Playground
 # containing both the FastAPI backend and Next.js frontend
 #
 # Build/run:
-#   docker build -t deeptutor:local .
+#   docker build -t arisehub-agent-playground:local .
 #   docker run -p 127.0.0.1:3782:3782 -p 127.0.0.1:8001:8001 \
-#     -v deeptutor-data:/app/data deeptutor:local
+#     -v arisehub-agent-playground-data:/app/data arisehub-agent-playground:local
 #
 # Prerequisites:
 #   1. Runtime settings are created under data/user/settings on first start
@@ -22,10 +22,17 @@
 # so there is no need to cross-compile this stage.
 FROM --platform=$BUILDPLATFORM node:22-slim AS frontend-builder
 
+# Brand name build arg (used by next.config.js at build time)
+ARG BRAND_NAME="AriseHub Agent Playground"
+ENV NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME}
+
 WORKDIR /app/web
 
 # Copy package files first for better caching
 COPY web/package.json web/package-lock.json* ./
+
+# Copy next.config.js from web/ so the build uses output: "standalone"
+COPY web/next.config.js ./
 
 # Install dependencies with generous timeout for CI environments
 RUN npm config set fetch-timeout 600000 && \
@@ -104,8 +111,8 @@ RUN pip install --upgrade pip && \
 FROM python:3.11-slim AS production
 
 # Labels
-LABEL maintainer="DeepTutor Team" \
-      description="DeepTutor: AI-Powered Personalized Learning Assistant"
+LABEL maintainer="AriseHub Team" \
+      description="AriseHub Agent Playground: AI-Powered Personalized Learning Assistant"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -191,13 +198,13 @@ RUN mkdir -p \
 # Bake a non-root user (UID 1000) for the supervisord programs. supervisord
 # itself runs as PID 1's UID — root under rootful Docker/Podman, or UID 1000
 # under rootless podman + `userns_mode: keep-id` (where PID 1 is the host
-# user). Each child (backend/frontend) is dropped to this `deeptutor` user via
-# the per-program `user=deeptutor` directive, so the app processes stay
+# user). Each child (backend/frontend) is dropped to this `arisehub` user via
+# the per-program `user=arisehub` directive, so the app processes stay
 # non-root in either runtime. UID 1000 also matches the host user under
 # keep-id with a bind mount on ./data.
-RUN groupadd --system --gid 1000 deeptutor \
-    && useradd --system --uid 1000 --gid 1000 --no-create-home --shell /usr/sbin/nologin deeptutor \
-    && chown -R deeptutor:deeptutor /app/data /app/web/.next
+RUN groupadd --system --gid 1000 arisehub \
+    && useradd --system --uid 1000 --gid 1000 --no-create-home --shell /usr/sbin/nologin arisehub \
+    && chown -R arisehub:arisehub /app/data /app/web/.next
 
 # supervisord config is split into two files so the production and development
 # images share one daemon-level [supervisord] section instead of duplicating it:
@@ -229,13 +236,13 @@ EOF
 RUN sed -i 's/\r$//' /etc/supervisor/supervisord.conf
 
 # Program definitions (production). Each child drops to the unprivileged
-# deeptutor user (UID 1000) via per-program `user=deeptutor`; see the note on
+# arisehub user (UID 1000) via per-program `user=arisehub`; see the note on
 # the user= design above the daemon config.
 RUN cat > /etc/supervisor/conf.d/programs.conf <<'EOF'
 [program:backend]
 command=/bin/bash /app/start-backend.sh
 directory=/app
-user=deeptutor
+user=arisehub
 autostart=true
 autorestart=true
 stdout_logfile=/dev/fd/1
@@ -247,7 +254,7 @@ environment=PYTHONPATH="/app",PYTHONUNBUFFERED="1"
 [program:frontend]
 command=/bin/bash /app/start-frontend.sh
 directory=/app/web
-user=deeptutor
+user=arisehub
 autostart=true
 autorestart=true
 startsecs=5
@@ -320,7 +327,7 @@ RUN cat > /app/entrypoint.sh <<'EOF'
 set -e
 
 echo "============================================"
-echo "🚀 Starting DeepTutor"
+echo "🚀 Starting AriseHub Agent Playground"
 echo "============================================"
 
 export DEEPTUTOR_IGNORE_PROCESS_ENV_OVERRIDES=1
@@ -362,9 +369,9 @@ from deeptutor.services.setup import init_user_directories
 init_user_directories(Path('/app'))
 " 2>/dev/null || echo "   ⚠️ Directory initialization skipped (will be created on first use)"
 
-# Idempotent: re-chown /app/data so the unprivileged `deeptutor` user (UID 1000)
+# Idempotent: re-chown /app/data so the unprivileged `arisehub` user (UID 1000)
 # owns it. Cheap on no-op; the only first-start cost is one stat per file.
-chown -R deeptutor:deeptutor /app/data 2>/dev/null || true
+chown -R arisehub:arisehub /app/data 2>/dev/null || true
 
 echo "⚙️  Loading runtime JSON settings..."
 eval "$(python - <<'PY'
@@ -406,7 +413,7 @@ echo "============================================"
 
 # Hand off to supervisord as PID 1. The daemon-level config deliberately omits
 # `user=` so supervisord inherits PID 1's UID and stays portable across rootful
-# and rootless-keep-id runtimes; children drop to the deeptutor user via
+# and rootless-keep-id runtimes; children drop to the arisehub user via
 # per-program `user=`. Full rationale lives next to the [supervisord] section
 # in the build step that writes /etc/supervisor/supervisord.conf.
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
@@ -455,16 +462,16 @@ FROM production AS development
 # went FATAL, and the image looked broken (#906). Taking the builder's tree
 # wholesale also stops the list from drifting each time web/ grows a
 # top-level entry. `--chown` during the copy avoids re-layering node_modules.
-COPY --chown=deeptutor:deeptutor --from=frontend-builder /app/web ./web
+COPY --chown=arisehub:arisehub --from=frontend-builder /app/web ./web
 
-# `next dev` runs as the unprivileged deeptutor user (via `user=deeptutor` in
+# `next dev` runs as the unprivileged arisehub user (via `user=arisehub` in
 # the supervisord config) and must create/write its build cache under
 # /app/web/.next, so give that user ownership of the web dir and the cache.
 # The production build copied in above is not reusable by `next dev`, so it
 # starts from an empty cache rather than a half-valid one.
 RUN rm -rf /app/web/.next \
     && mkdir -p /app/web/.next \
-    && chown deeptutor:deeptutor /app/web /app/web/.next
+    && chown arisehub:arisehub /app/web /app/web/.next
 
 # Install development tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -485,7 +492,7 @@ RUN cat > /etc/supervisor/conf.d/programs.conf <<'EOF'
 [program:backend]
 command=/bin/bash -c "exec python -m uvicorn deeptutor.api.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8001} --reload --no-access-log --ws-max-size $(python -c 'from deeptutor.services.config import get_ws_max_size; print(get_ws_max_size())' 2>/dev/null || echo 16777216) --timeout-keep-alive $(python -c 'from deeptutor.services.config import HTTP_KEEP_ALIVE_TIMEOUT; print(HTTP_KEEP_ALIVE_TIMEOUT)' 2>/dev/null || echo 300)"
 directory=/app
-user=deeptutor
+user=arisehub
 autostart=true
 autorestart=true
 stdout_logfile=/dev/fd/1
@@ -497,7 +504,7 @@ environment=PYTHONPATH="/app",PYTHONUNBUFFERED="1"
 [program:frontend]
 command=/bin/bash -c "cd /app/web && node scripts/dev.mjs -H 0.0.0.0 -p ${FRONTEND_PORT:-3782}"
 directory=/app/web
-user=deeptutor
+user=arisehub
 autostart=true
 autorestart=true
 startsecs=5

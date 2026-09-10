@@ -1,14 +1,14 @@
 # ============================================
-# DeepTutor Docker Compose — Pre-built GHCR Image
+# AriseHub Agent Playground Docker Compose — Pre-built GHCR Image
 # ============================================
-# Run DeepTutor using the official pre-built image from GitHub Container Registry.
+# Run AriseHub Agent Playground using the official pre-built image from GitHub Container Registry.
 # No local build required — the image is pulled automatically.
 #
 # Usage:
 #   python scripts/docker_compose.py -f docker-compose.ghcr.yml up -d
 #
 # To pin a specific version:
-#   Edit the image tag below, e.g. ghcr.io/hkuds/deeptutor:1.0.0
+#   Edit the image tag below, e.g. ghcr.io/arise-hub/arisehub-agent-playground:v0.0.1
 #
 # Prerequisites:
 #   1. Configure providers in data/user/settings/model_catalog.json or the UI
@@ -37,10 +37,10 @@
 # ============================================
 
 services:
-  deeptutor:
-    image: ghcr.io/hkuds/deeptutor:latest
+  arisehub-agent-playground:
+    image: ghcr.io/arise-hub/arisehub-agent-playground:v0.0.1
     pull_policy: always
-    container_name: deeptutor
+    container_name: arisehub-agent-playground
     restart: unless-stopped
     ports:
       - "${DEEPTUTOR_DOCKER_BACKEND_PORT:-8001}:${DEEPTUTOR_DOCKER_BACKEND_PORT:-8001}"
@@ -64,8 +64,8 @@ services:
       start_period: 60s
 
     networks:
-      - deeptutor-network
+      - arisehub-network
 
 networks:
-  deeptutor-network:
+  arisehub-network:
     driver: bridge
